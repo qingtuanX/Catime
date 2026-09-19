@@ -28,14 +28,50 @@ static FILE* OpenUtf8File(const char* utf8Path, const wchar_t* mode) {
     return _wfopen(widePath, mode);
 }
 
+/* Bounded copy: avoids strncpy/format truncation warnings. */
+static void CopyText(char* destination, size_t destinationSize, const char* source) {
+    size_t length = 0;
+    if (!destination || destinationSize < 2) return;
+    if (!source) source = "";
+    length = strlen(source);
+    if (length > destinationSize - 1) length = destinationSize - 1;
+    if (length > 0) memcpy(destination, source, length);
+    destination[length] = '\0';
+}
+
+/* Join a directory and a file name into a fixed buffer, without sprintf. */
+static void JoinPath(char* destination, size_t destinationSize,
+                     const char* directory, const char* fileName) {
+    size_t length = 0;
+    if (!destination || destinationSize < 2) return;
+    destination[0] = '\0';
+    if (!directory) directory = "";
+    if (!fileName) fileName = "";
+
+    length = strlen(directory);
+    if (length > destinationSize - 1) length = destinationSize - 1;
+    if (length > 0) memcpy(destination, directory, length);
+
+    if (length + 1 < destinationSize && fileName[0] != '\0') {
+        size_t fileNameLength = strlen(fileName);
+        size_t room = destinationSize - length - 2; /* keep space for '\' and NUL */
+        if (fileNameLength > room) fileNameLength = room;
+        destination[length] = '\\';
+        if (fileNameLength > 0) {
+            memcpy(destination + length + 1, fileName, fileNameLength);
+        }
+        length += 1 + fileNameLength;
+    }
+    destination[length] = '\0';
+}
+
 void PomodoroStats_DataDir(char* out, size_t outSize) {
-    if (!out || outSize == 0) return;
+    char configPath[MAX_PATH];
+    if (!out || outSize < 2) return;
     out[0] = '\0';
 
-    char configPath[MAX_PATH];
     GetConfigPath(configPath, MAX_PATH);
-    strncpy(out, configPath, outSize - 1);
-    out[outSize - 1] = '\0';
+    CopyText(out, outSize, configPath);
 
     char* separator = strrchr(out, '\\');
     if (!separator) separator = strrchr(out, '/');
@@ -46,7 +82,7 @@ const char* PomodoroStats_ProjectsFilePath(void) {
     static char path[MAX_PATH];
     char dir[MAX_PATH];
     PomodoroStats_DataDir(dir, sizeof(dir));
-    snprintf(path, sizeof(path), "%s\\pomodoro_projects.txt", dir);
+    JoinPath(path, sizeof(path), dir, "pomodoro_projects.txt");
     return path;
 }
 
@@ -67,26 +103,28 @@ static void EnsureProjectsFile(void) {
 
 int PomodoroStats_ListProjects(char names[POMODORO_STATS_MAX_PROJECTS][POMODORO_STATS_NAME_MAX]) {
     int count = 0;
+    char line[512];
+    FILE* file = NULL;
+
     if (!names) return 0;
 
     EnsureProjectsFile();
 
-    FILE* file = OpenUtf8File(PomodoroStats_ProjectsFilePath(), L"rb");
+    file = OpenUtf8File(PomodoroStats_ProjectsFilePath(), L"rb");
     if (!file) return 0;
 
-    char line[512];
     while (count < POMODORO_STATS_MAX_PROJECTS && fgets(line, sizeof(line), file)) {
         char* start = line;
+        char* end = NULL;
         while (*start == ' ' || *start == '\t') start++;
-        char* end = start + strlen(start);
+        end = start + strlen(start);
         while (end > start && (end[-1] == '\n' || end[-1] == '\r' ||
                                end[-1] == ' ' || end[-1] == '\t')) {
             end--;
         }
         *end = '\0';
         if (*start == '\0' || *start == '#' || *start == ';') continue;
-        strncpy(names[count], start, POMODORO_STATS_NAME_MAX - 1);
-        names[count][POMODORO_STATS_NAME_MAX - 1] = '\0';
+        CopyText(names[count], POMODORO_STATS_NAME_MAX, start);
         count++;
     }
 
@@ -95,38 +133,38 @@ int PomodoroStats_ListProjects(char names[POMODORO_STATS_MAX_PROJECTS][POMODORO_
 }
 
 const char* PomodoroStats_CurrentProject(void) {
-    if (!g_currentProjectLoaded) {
-        char value[POMODORO_STATS_NAME_MAX] = {0};
-        char configPath[MAX_PATH];
-        GetConfigPath(configPath, MAX_PATH);
-        ReadIniString(INI_SECTION_POMODORO, "POMODORO_CURRENT_PROJECT", "",
-                      value, sizeof(value), configPath);
+    char value[POMODORO_STATS_NAME_MAX];
+    char configPath[MAX_PATH];
 
-        if (value[0] == '\0') {
-            char projects[POMODORO_STATS_MAX_PROJECTS][POMODORO_STATS_NAME_MAX];
-            int count = PomodoroStats_ListProjects(projects);
-            if (count > 0) {
-                strncpy(value, projects[0], sizeof(value) - 1);
-            } else {
-                strncpy(value, "Default", sizeof(value) - 1);
-            }
+    if (g_currentProjectLoaded) return g_currentProject;
+
+    value[0] = '\0';
+    GetConfigPath(configPath, MAX_PATH);
+    ReadIniString(INI_SECTION_POMODORO, "POMODORO_CURRENT_PROJECT", "",
+                  value, sizeof(value), configPath);
+
+    if (value[0] == '\0') {
+        char projects[POMODORO_STATS_MAX_PROJECTS][POMODORO_STATS_NAME_MAX];
+        int count = PomodoroStats_ListProjects(projects);
+        if (count > 0) {
+            CopyText(value, sizeof(value), projects[0]);
+        } else {
+            CopyText(value, sizeof(value), "Default");
         }
-
-        strncpy(g_currentProject, value, sizeof(g_currentProject) - 1);
-        g_currentProject[sizeof(g_currentProject) - 1] = '\0';
-        g_currentProjectLoaded = TRUE;
     }
+
+    CopyText(g_currentProject, sizeof(g_currentProject), value);
+    g_currentProjectLoaded = TRUE;
     return g_currentProject;
 }
 
 void PomodoroStats_SetCurrentProject(const char* name) {
+    char configPath[MAX_PATH];
     if (!name || !*name) return;
 
-    strncpy(g_currentProject, name, sizeof(g_currentProject) - 1);
-    g_currentProject[sizeof(g_currentProject) - 1] = '\0';
+    CopyText(g_currentProject, sizeof(g_currentProject), name);
     g_currentProjectLoaded = TRUE;
 
-    char configPath[MAX_PATH];
     GetConfigPath(configPath, MAX_PATH);
     WriteIniString(INI_SECTION_POMODORO, "POMODORO_CURRENT_PROJECT",
                    g_currentProject, configPath);
@@ -135,31 +173,38 @@ void PomodoroStats_SetCurrentProject(const char* name) {
 static void SanitizeCsvField(const char* source, char* destination, size_t destinationSize) {
     size_t written = 0;
     if (!destination || destinationSize == 0) return;
-    for (size_t i = 0; source && source[i] != '\0' && written + 1 < destinationSize; i++) {
-        char current = source[i];
+    while (source && source[written] != '\0' && written + 1 < destinationSize) {
+        char current = source[written];
         if (current == ',' || current == '\r' || current == '\n') current = ' ';
-        destination[written++] = current;
+        destination[written] = current;
+        written++;
     }
     destination[written] = '\0';
 }
 
 void PomodoroStats_RecordSession(const char* project, int seconds) {
+    char dir[MAX_PATH];
+    char path[MAX_PATH];
+    char safeProject[POMODORO_STATS_NAME_MAX];
+    char timestamp[32];
+    BOOL needsBom = TRUE;
+    FILE* probe = NULL;
+    FILE* file = NULL;
+    time_t now = 0;
+    struct tm* localTime = NULL;
+
     if (seconds <= 0) return;
 
-    char dir[MAX_PATH];
     PomodoroStats_DataDir(dir, sizeof(dir));
+    JoinPath(path, sizeof(path), dir, "pomodoro_stats.csv");
 
-    char path[MAX_PATH];
-    snprintf(path, sizeof(path), "%s\\pomodoro_stats.csv", dir);
-
-    BOOL needsBom = TRUE;
-    FILE* probe = OpenUtf8File(path, L"rb");
+    probe = OpenUtf8File(path, L"rb");
     if (probe) {
         needsBom = FALSE;
         fclose(probe);
     }
 
-    FILE* file = OpenUtf8File(path, L"ab");
+    file = OpenUtf8File(path, L"ab");
     if (!file) {
         LOG_WARNING("PomodoroStats: failed to open the statistics file");
         return;
@@ -168,12 +213,12 @@ void PomodoroStats_RecordSession(const char* project, int seconds) {
         fwrite("\xEF\xBB\xBF", 1, 3, file); /* UTF-8 BOM so Excel reads it correctly */
     }
 
-    char safeProject[POMODORO_STATS_NAME_MAX];
-    SanitizeCsvField(project && *project ? project : "Default", safeProject, sizeof(safeProject));
+    SanitizeCsvField((project && *project) ? project : "Default",
+                     safeProject, sizeof(safeProject));
 
-    char timestamp[32] = "";
-    time_t now = time(NULL);
-    struct tm* localTime = localtime(&now);
+    timestamp[0] = '\0';
+    now = time(NULL);
+    localTime = localtime(&now);
     if (localTime) {
         strftime(timestamp, sizeof(timestamp), "%Y-%m-%d %H:%M:%S", localTime);
     }
@@ -183,9 +228,10 @@ void PomodoroStats_RecordSession(const char* project, int seconds) {
 }
 
 void PomodoroStats_PromptRecordElapsed(HWND hwnd, int elapsedSeconds) {
+    wchar_t message[256];
+
     if (elapsedSeconds < 60) return;
 
-    wchar_t message[256];
     _snwprintf_s(message, _countof(message), _TRUNCATE,
                  GetLocalizedString(NULL,
                      L"Timer already used %d min. Record it to this project?"),
@@ -200,13 +246,17 @@ void PomodoroStats_PromptRecordElapsed(HWND hwnd, int elapsedSeconds) {
 
 void PomodoroStats_OpenViewer(HWND hwnd) {
     wchar_t exePath[MAX_PATH];
-    if (GetModuleFileNameW(NULL, exePath, MAX_PATH) == 0) return;
+    wchar_t viewerPath[MAX_PATH];
+    wchar_t* separator = NULL;
+    DWORD moduleLength = 0;
 
-    wchar_t* separator = wcsrchr(exePath, L'\\');
+    moduleLength = GetModuleFileNameW(NULL, exePath, _countof(exePath));
+    if (moduleLength == 0 || moduleLength >= _countof(exePath)) return;
+
+    separator = wcsrchr(exePath, L'\\');
     if (!separator) return;
     *separator = L'\0';
 
-    wchar_t viewerPath[MAX_PATH];
     _snwprintf_s(viewerPath, _countof(viewerPath), _TRUNCATE,
                  L"%ls\\pomodoro-stats.exe", exePath);
 
