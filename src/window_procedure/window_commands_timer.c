@@ -17,7 +17,6 @@
 #include "config.h"
 #include "window.h"
 #include "pomodoro.h"
-#include "pomodoro_stats.h"
 #include "notification.h"
 #include "log.h"
 #include "utils/time_parser.h"
@@ -275,21 +274,6 @@ BOOL HandleQuickCountdown(HWND hwnd, UINT cmd, int index) {
 BOOL HandlePomodoroTime(HWND hwnd, UINT cmd, int index) {
     (void)cmd;
     return HandlePomodoroTimeConfig(hwnd, index);
-}
-
-LRESULT CmdPomodoroStats(HWND hwnd, WPARAM wp, LPARAM lp) {
-    (void)wp; (void)lp;
-    PomodoroStats_OpenViewer(hwnd);
-    return 0;
-}
-
-BOOL HandlePomodoroProject(HWND hwnd, UINT cmd, int index) {
-    (void)hwnd; (void)cmd;
-    char projects[POMODORO_STATS_MAX_PROJECTS][POMODORO_STATS_NAME_MAX];
-    int count = PomodoroStats_ListProjects(projects);
-    if (index < 0 || index >= count) return FALSE;
-    PomodoroStats_SetCurrentProject(projects[index]);
-    return TRUE;
 }
 
 /* ============================================================================

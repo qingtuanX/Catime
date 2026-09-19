@@ -51,8 +51,11 @@ LRESULT CmdSetCountdownTime(HWND hwnd, WPARAM wp, LPARAM lp);
 
 /* Pomodoro */
 LRESULT CmdPomodoroStart(HWND hwnd, WPARAM wp, LPARAM lp);
+
+/* Pomodoro statistics (window_commands_pomodoro_stats.c) */
 LRESULT CmdPomodoroStats(HWND hwnd, WPARAM wp, LPARAM lp);
 BOOL HandlePomodoroProject(HWND hwnd, UINT cmd, int index);
+
 LRESULT CmdPomodoroReset(HWND hwnd, WPARAM wp, LPARAM lp);
 LRESULT CmdPomodoroLoopCount(HWND hwnd, WPARAM wp, LPARAM lp);
 LRESULT CmdPomodoroCombo(HWND hwnd, WPARAM wp, LPARAM lp);
