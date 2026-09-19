@@ -149,8 +149,10 @@ BOOL TimerEvents_HandlePomodoroCompletion(HWND hwnd) {
                            completedIndex, timesCount, loopCount,
                            currentCycle, stepInCycle);
 
-    /* Finishing the work interval (index 0) counts as one completed pomodoro. */
-    if (completedIndex == 0) {
+    /* The interval sequence alternates work / break (default 25m, 5m, 25m, 10m),
+       so every other interval - index 0, 2, ... - is a work interval and counts
+       as one completed pomodoro. */
+    if ((completedIndex % 2) == 0) {
         IncrementPomodoroCompletedCount();
     }
     AppendPomodoroTotal(completionMsg, _countof(completionMsg));
