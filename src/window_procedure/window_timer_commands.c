@@ -96,12 +96,8 @@ void ToggleEditMode(HWND hwnd) {
     }
 }
 void RestartCurrentTimer(HWND hwnd) {
-    /* A work interval was interrupted: let the user record or discard it. */
-    if (current_pomodoro_phase != POMODORO_PHASE_IDLE &&
-        (current_pomodoro_time_index % 2) == 0 &&
-        countdown_elapsed_time >= 60) {
-        PomodoroStats_PromptRecordElapsed(hwnd, (int)countdown_elapsed_time);
-    }
+    /* Stopping or restarting mid-interval must offer the same choice. */
+    PomodoroStats_PromptInterruptedWork(hwnd);
     CloseAllNotifications(); // Centralized cleanup
     StopNotificationSound();
     CleanupBeforeTimerAction(hwnd);

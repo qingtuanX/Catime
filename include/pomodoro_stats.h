@@ -32,8 +32,8 @@ void PomodoroStats_SetCurrentProject(const char* name);
 /* Append one finished work interval to pomodoro_stats.csv. */
 void PomodoroStats_RecordSession(const char* project, int seconds);
 
-/* Ask the user whether to record an interrupted work interval. */
-void PomodoroStats_PromptRecordElapsed(HWND hwnd, int elapsedSeconds);
+/* Ask whether an interrupted work interval should be recorded or discarded. */
+void PomodoroStats_PromptInterruptedWork(HWND hwnd);
 
 /* Open the statistics viewer (pomodoro-stats.exe next to catime.exe). */
 void PomodoroStats_OpenViewer(HWND hwnd);

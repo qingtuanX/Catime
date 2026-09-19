@@ -14,6 +14,8 @@
 #include "config.h"
 #include "language.h"
 #include "log.h"
+#include "pomodoro.h"
+#include "timer/timer.h"
 
 static char g_currentProject[POMODORO_STATS_NAME_MAX] = {0};
 static BOOL g_currentProjectLoaded = FALSE;
@@ -227,20 +229,24 @@ void PomodoroStats_RecordSession(const char* project, int seconds) {
     fclose(file);
 }
 
-void PomodoroStats_PromptRecordElapsed(HWND hwnd, int elapsedSeconds) {
+void PomodoroStats_PromptInterruptedWork(HWND hwnd) {
     wchar_t message[256];
+    int elapsedMinutes = 0;
 
-    if (elapsedSeconds < 60) return;
+    if (current_pomodoro_phase == POMODORO_PHASE_IDLE) return;
+    if ((current_pomodoro_time_index % 2) != 0) return; /* break interval */
+    elapsedMinutes = (int)(countdown_elapsed_time / 60);
+    if (elapsedMinutes < 1) return;
 
     _snwprintf_s(message, _countof(message), _TRUNCATE,
                  GetLocalizedString(NULL,
                      L"Timer already used %d min. Record it to this project?"),
-                 elapsedSeconds / 60);
+                 elapsedMinutes);
 
     if (MessageBoxW(hwnd, message, L"Catime",
                     MB_YESNO | MB_ICONQUESTION | MB_TOPMOST) == IDYES) {
         PomodoroStats_RecordSession(PomodoroStats_CurrentProject(),
-                                    (elapsedSeconds / 60) * 60);
+                                    elapsedMinutes * 60);
     }
 }
 

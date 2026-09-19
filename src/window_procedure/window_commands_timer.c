@@ -17,6 +17,7 @@
 #include "config.h"
 #include "window.h"
 #include "pomodoro.h"
+#include "pomodoro_stats.h"
 #include "notification.h"
 #include "log.h"
 #include "utils/time_parser.h"
@@ -204,6 +205,7 @@ LRESULT CmdPomodoroStart(HWND hwnd, WPARAM wp, LPARAM lp) {
 
 LRESULT CmdPomodoroReset(HWND hwnd, WPARAM wp, LPARAM lp) {
     (void)wp; (void)lp;
+    PomodoroStats_PromptInterruptedWork(hwnd);
     CleanupBeforeTimerAction(hwnd);
 
     current_pomodoro_phase = POMODORO_PHASE_IDLE;
