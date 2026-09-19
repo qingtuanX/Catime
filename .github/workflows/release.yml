@@ -291,3 +291,38 @@ jobs:
       version: ${{ needs.build.outputs.tag_version }}
     secrets:
       CHOCOLATEY_API_KEY: ${{ secrets.CHOCOLATEY_API_KEY }}
+
+  # Fork-only helper: attach the unsigned build to a GitHub Release so the
+  # patched executable can be downloaded without authentication.
+  publish-fork-build:
+    name: publish / fork build
+    if: github.repository != 'vladelaina/Catime'
+    needs: [build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - name: Download unsigned build
+      uses: actions/download-artifact@v8
+      with:
+        artifact-ids: ${{ needs.build.outputs.artifact-id }}
+        path: dist
+
+    - name: Rename asset
+      run: |
+        set -euo pipefail
+        file=$(find dist -type f -iname '*.exe' -print -quit)
+        test -n "$file"
+        mv "$file" catime_1.6.2_pomodoro-count.exe
+
+    - name: Publish release asset
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        set -euo pipefail
+        tag="${GITHUB_REF_NAME}"
+        if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+          gh release upload "$tag" catime_1.6.2_pomodoro-count.exe --clobber --repo "$GITHUB_REPOSITORY"
+        else
+          gh release create "$tag" catime_1.6.2_pomodoro-count.exe             --repo "$GITHUB_REPOSITORY"             --title "Catime 1.6.2 + 累计番茄钟计数"             --notes "自用构建：在官方 1.6.2 基础上增加「累计完成的番茄钟数量」记录（完成通知与托盘菜单可见）。"
+        fi
