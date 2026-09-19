@@ -8,6 +8,46 @@
 
 #include "timer_events_internal.h"
 
+/* Total completed work pomodoros, persisted in the config INI. */
+#define POMODORO_COUNT_INI_KEY "POMODORO_COMPLETED_COUNT"
+
+static int pomodoro_completed_count = -1; /* -1 = not loaded yet */
+
+int GetPomodoroCompletedCount(void) {
+    if (pomodoro_completed_count < 0) {
+        char configPath[MAX_PATH];
+        GetConfigPath(configPath, MAX_PATH);
+        pomodoro_completed_count = ReadIniInt(INI_SECTION_POMODORO,
+                                              POMODORO_COUNT_INI_KEY, 0,
+                                              configPath);
+        if (pomodoro_completed_count < 0) {
+            pomodoro_completed_count = 0;
+        }
+    }
+    return pomodoro_completed_count;
+}
+
+static void IncrementPomodoroCompletedCount(void) {
+    char configPath[MAX_PATH];
+    int next = GetPomodoroCompletedCount() + 1;
+    pomodoro_completed_count = next;
+    GetConfigPath(configPath, MAX_PATH);
+    WriteIniInt(INI_SECTION_POMODORO, POMODORO_COUNT_INI_KEY, next, configPath);
+}
+
+/* Append " · Total pomodoros: N" to a notification message. */
+static void AppendPomodoroTotal(wchar_t* message, size_t messageSize) {
+    wchar_t totalText[64];
+    wchar_t merged[320];
+    _snwprintf_s(totalText, _countof(totalText), _TRUNCATE,
+                 GetLocalizedString(NULL, L"Total pomodoros: %d"),
+                 GetPomodoroCompletedCount());
+    if (_snwprintf_s(merged, _countof(merged), _TRUNCATE, L"%ls · %ls",
+                     message, totalText) > 0) {
+        wcscpy_s(message, messageSize, merged);
+    }
+}
+
 BOOL TimerEvents_AdvancePomodoroState(void) {
     if (pomodoro_initial_times_count == 0) {
         return FALSE;
@@ -109,14 +149,22 @@ BOOL TimerEvents_HandlePomodoroCompletion(HWND hwnd) {
                            completedIndex, timesCount, loopCount,
                            currentCycle, stepInCycle);
 
+    /* Finishing the work interval (index 0) counts as one completed pomodoro. */
+    if (completedIndex == 0) {
+        IncrementPomodoroCompletedCount();
+    }
+    AppendPomodoroTotal(completionMsg, _countof(completionMsg));
+
     if (!TimerEvents_AdvancePomodoroState()) {
         ShowNotification(hwnd, completionMsg);
         TimerEvents_ResetTimerState(0);
         ResetPomodoroState();
 
-        const wchar_t* allCompleted =
-            GetLocalizedString(NULL, L"All Pomodoro cycles completed!");
-        ShowNotification(hwnd, allCompleted);
+        wchar_t allCompletedMsg[256];
+        wcscpy_s(allCompletedMsg, _countof(allCompletedMsg),
+                 GetLocalizedString(NULL, L"All Pomodoro cycles completed!"));
+        AppendPomodoroTotal(allCompletedMsg, _countof(allCompletedMsg));
+        ShowNotification(hwnd, allCompletedMsg);
         PlayNotificationSound(hwnd);
 
         CLOCK_COUNT_UP = false;

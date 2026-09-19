@@ -24,6 +24,12 @@ extern int current_pomodoro_time_index;
 extern int complete_pomodoro_cycles;
 
 /**
+ * @brief Total completed work pomodoros; persisted in the config file.
+ *        Loaded on first use, incremented whenever a work interval finishes.
+ */
+int GetPomodoroCompletedCount(void);
+
+/**
  * @note InitializePomodoro() declared in timer_events.h
  * @note POMODORO_TIMES and related config now in g_AppConfig.pomodoro
  */

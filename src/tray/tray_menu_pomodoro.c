@@ -193,6 +193,15 @@ void BuildPomodoroMenu(HMENU hMenu) {
     AppendMenuW(hPomodoroMenu, MF_STRING, CLOCK_IDM_POMODORO_COMBINATION,
               GetLocalizedString(NULL, L"Combination"));
 
+    AppendMenuW(hPomodoroMenu, MF_SEPARATOR, 0, NULL);
+
+    wchar_t totalText[64];
+    _snwprintf_s(totalText, _countof(totalText), _TRUNCATE,
+                 GetLocalizedString(NULL, L"Total pomodoros: %d"),
+                 GetPomodoroCompletedCount());
+    AppendMenuW(hPomodoroMenu, MF_STRING | MF_GRAYED,
+                CLOCK_IDM_POMODORO_TOTAL, totalText);
+
     if (!AppendMenuW(hMenu, MF_POPUP, (UINT_PTR)hPomodoroMenu,
                      GetLocalizedString(NULL, L"Pomodoro"))) {
         DestroyMenu(hPomodoroMenu);
