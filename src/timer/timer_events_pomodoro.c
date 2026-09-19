@@ -7,6 +7,7 @@
 #include <wchar.h>
 
 #include "timer_events_internal.h"
+#include "pomodoro_stats.h"
 
 /* Total completed work pomodoros, persisted in the config INI. */
 #define POMODORO_COUNT_INI_KEY "POMODORO_COMPLETED_COUNT"
@@ -154,6 +155,10 @@ BOOL TimerEvents_HandlePomodoroCompletion(HWND hwnd) {
        as one completed pomodoro. */
     if ((completedIndex % 2) == 0) {
         IncrementPomodoroCompletedCount();
+        if (completedIndex < pomodoro_initial_times_count) {
+            PomodoroStats_RecordSession(PomodoroStats_CurrentProject(),
+                                        pomodoro_initial_times[completedIndex]);
+        }
     }
     AppendPomodoroTotal(completionMsg, _countof(completionMsg));
 

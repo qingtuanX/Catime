@@ -14,6 +14,7 @@
 #include "audio_player.h"
 #include "window.h"
 #include "pomodoro.h"
+#include "pomodoro_stats.h"
 #include "notification.h"
 #include "drawing.h"
 #include "../resource/resource.h"
@@ -95,6 +96,12 @@ void ToggleEditMode(HWND hwnd) {
     }
 }
 void RestartCurrentTimer(HWND hwnd) {
+    /* A work interval was interrupted: let the user record or discard it. */
+    if (current_pomodoro_phase != POMODORO_PHASE_IDLE &&
+        (current_pomodoro_time_index % 2) == 0 &&
+        countdown_elapsed_time >= 60) {
+        PomodoroStats_PromptRecordElapsed(hwnd, (int)countdown_elapsed_time);
+    }
     CloseAllNotifications(); // Centralized cleanup
     StopNotificationSound();
     CleanupBeforeTimerAction(hwnd);

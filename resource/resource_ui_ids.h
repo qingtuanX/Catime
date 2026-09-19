@@ -23,6 +23,8 @@
 #define CLOCK_IDM_POMODORO_RESET 186     /**< Reset Pomodoro timer */
 #define CLOCK_IDM_POMODORO_COMBINATION 188 /**< Pomodoro combination settings */
 #define CLOCK_IDM_POMODORO_TOTAL 189     /**< Completed pomodoro total (display only) */
+#define CLOCK_IDM_POMODORO_STATS 190     /**< Open the pomodoro statistics viewer */
+#define CLOCK_IDM_POMODORO_PROJECT_BASE 700 /**< Base ID for pomodoro project menu items */
 
 /** @brief Pomodoro dialog identifiers */
 #define CLOCK_IDD_POMODORO_TIME_DIALOG 510  /**< Pomodoro time configuration dialog */

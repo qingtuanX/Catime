@@ -27,6 +27,7 @@ static const CommandDispatchEntry COMMAND_DISPATCH_TABLE[] = {
     {CLOCK_IDM_COUNT_UP_RESET, CmdCountUpReset},
     {CLOCK_IDM_TIME_FORMAT_SHOW_MILLISECONDS, CmdToggleMilliseconds},
     {CLOCK_IDM_POMODORO_START, CmdPomodoroStart},
+    {CLOCK_IDM_POMODORO_STATS, CmdPomodoroStats},
     {CLOCK_IDM_POMODORO_RESET, CmdPomodoroReset},
     {CLOCK_IDM_POMODORO_LOOP_COUNT, CmdPomodoroLoopCount},
     {CLOCK_IDM_POMODORO_COMBINATION, CmdPomodoroCombo},

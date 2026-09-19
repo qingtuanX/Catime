@@ -9,6 +9,8 @@
 #include "language.h"
 #include "timer/timer.h"
 #include "pomodoro.h"
+#include "pomodoro_stats.h"
+#include "utils/string_convert.h"
 #include "utils/string_format.h"
 #include "config/config_defaults.h"
 #include "log.h"
@@ -201,6 +203,32 @@ void BuildPomodoroMenu(HMENU hMenu) {
                  GetPomodoroCompletedCount());
     AppendMenuW(hPomodoroMenu, MF_STRING | MF_GRAYED,
                 CLOCK_IDM_POMODORO_TOTAL, totalText);
+
+    AppendMenuW(hPomodoroMenu, MF_SEPARATOR, 0, NULL);
+
+    char projectNames[POMODORO_STATS_MAX_PROJECTS][POMODORO_STATS_NAME_MAX];
+    int projectCount = PomodoroStats_ListProjects(projectNames);
+    if (projectCount > 0) {
+        HMENU hProjectMenu = CreatePopupMenu();
+        if (hProjectMenu) {
+            const char* currentProject = PomodoroStats_CurrentProject();
+            for (int i = 0; i < projectCount; i++) {
+                wchar_t wideName[POMODORO_STATS_NAME_MAX];
+                Utf8ToWide(projectNames[i], wideName, POMODORO_STATS_NAME_MAX);
+                AppendMenuW(hProjectMenu,
+                            MF_STRING | (strcmp(projectNames[i], currentProject) == 0
+                                             ? MF_CHECKED : MF_UNCHECKED),
+                            CLOCK_IDM_POMODORO_PROJECT_BASE + i, wideName);
+            }
+            AppendMenuW(hProjectMenu, MF_SEPARATOR, 0, NULL);
+            AppendMenuW(hProjectMenu, MF_STRING, CLOCK_IDM_POMODORO_STATS,
+                        GetLocalizedString(NULL, L"Statistics..."));
+            if (!AppendMenuW(hPomodoroMenu, MF_POPUP, (UINT_PTR)hProjectMenu,
+                             GetLocalizedString(NULL, L"Project"))) {
+                DestroyMenu(hProjectMenu);
+            }
+        }
+    }
 
     if (!AppendMenuW(hMenu, MF_POPUP, (UINT_PTR)hPomodoroMenu,
                      GetLocalizedString(NULL, L"Pomodoro"))) {

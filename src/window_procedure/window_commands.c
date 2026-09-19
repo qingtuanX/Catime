@@ -4,6 +4,7 @@
  */
 
 #include "window_commands_internal.h"
+#include "pomodoro_stats.h"
 
 static BOOL RemoveRecentFileAtIndex(int index) {
     int count = g_AppConfig.recent_files.count;
@@ -190,6 +191,9 @@ BOOL DispatchRangeCommand(HWND hwnd, UINT cmd, WPARAM wp, LPARAM lp) {
          HandleRecentFile},
         {CMD_POMODORO_TIME_BASE, CMD_POMODORO_TIME_END,
          HandlePomodoroTime},
+        {CLOCK_IDM_POMODORO_PROJECT_BASE,
+         CLOCK_IDM_POMODORO_PROJECT_BASE + POMODORO_STATS_MAX_PROJECTS - 1,
+         HandlePomodoroProject},
         {CMD_FONT_SELECTION_BASE,
          CMD_FONT_SELECTION_BASE + FONT_MENU_MAX_ENTRIES - 1,
          HandleFontSelection},
