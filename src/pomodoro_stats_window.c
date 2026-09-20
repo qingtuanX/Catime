@@ -130,6 +130,8 @@ static LRESULT CALLBACK StatsWindowProc(HWND hwnd, UINT message, WPARAM wp, LPAR
         MINMAXINFO* limits = (MINMAXINFO*)lp;
         RECT frame = {0, 0, STATS_MIN_CLIENT_WIDTH, STATS_MIN_CLIENT_HEIGHT};
         if (!limits) break;
+        frame.right = DialogModern_Scale(g_stats.dpi, STATS_MIN_CLIENT_WIDTH);
+        frame.bottom = DialogModern_Scale(g_stats.dpi, STATS_MIN_CLIENT_HEIGHT);
         AdjustWindowRectEx(&frame, WS_OVERLAPPEDWINDOW, FALSE, 0);
         limits->ptMinTrackSize.x = frame.right - frame.left;
         limits->ptMinTrackSize.y = frame.bottom - frame.top;
@@ -220,11 +222,13 @@ static LRESULT CALLBACK StatsWindowProc(HWND hwnd, UINT message, WPARAM wp, LPAR
 
 void PomodoroStats_ShowWindow(HWND owner) {
     DWORD style = WS_OVERLAPPEDWINDOW;
-    RECT frame = {0, 0, STATS_CLIENT_WIDTH, STATS_CLIENT_HEIGHT};
     HINSTANCE instance = GetModuleHandleW(NULL);
     WNDCLASSEXW existing = {0};
     WNDCLASSEXW windowClass = {0};
     HWND hwnd = NULL;
+    UINT dpi = DialogModern_GetDpi(owner && IsWindow(owner) ? owner : NULL);
+    RECT frame = {0, 0, DialogModern_Scale(dpi, STATS_CLIENT_WIDTH),
+                  DialogModern_Scale(dpi, STATS_CLIENT_HEIGHT)};
 
     if (g_stats.hwnd && IsWindow(g_stats.hwnd)) {
         ShowWindow(g_stats.hwnd, SW_SHOWNORMAL);

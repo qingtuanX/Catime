@@ -233,11 +233,13 @@ static LRESULT CALLBACK ProjectsDialogProc(HWND hwnd, UINT message,
 
 void PomodoroStats_ShowProjectsDialog(HWND owner) {
     DWORD style = WS_OVERLAPPEDWINDOW & ~(WS_MAXIMIZEBOX | WS_THICKFRAME);
-    RECT frame = {0, 0, PROJECTS_CLIENT_WIDTH, PROJECTS_CLIENT_HEIGHT};
     HINSTANCE instance = GetModuleHandleW(NULL);
     WNDCLASSEXW existing = {0};
     WNDCLASSEXW windowClass = {0};
     HWND hwnd = NULL;
+    UINT dpi = DialogModern_GetDpi(owner && IsWindow(owner) ? owner : NULL);
+    RECT frame = {0, 0, DialogModern_Scale(dpi, PROJECTS_CLIENT_WIDTH),
+                  DialogModern_Scale(dpi, PROJECTS_CLIENT_HEIGHT)};
     RECT anchor = {0};
     int x = 0;
     int y = 0;
