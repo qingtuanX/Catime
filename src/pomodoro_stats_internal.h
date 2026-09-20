@@ -18,6 +18,7 @@
 #define POMODORO_STATS_ID_REFRESH 4004
 #define POMODORO_STATS_ID_MANAGE 4005
 #define POMODORO_STATS_ID_OPEN_FOLDER 4006
+#define POMODORO_STATS_ID_CLEAR 4007
 
 #define POMODORO_STATS_SLICE_COUNT 8
 #define POMODORO_STATS_REFRESH_MS 3000
@@ -64,5 +65,8 @@ void PomodoroStats_DrawLegend(HDC hdc, const PomodoroStatsUi* ui,
 
 /* --- pomodoro_stats_projects_dialog.c ---------------------------------- */
 void PomodoroStats_ShowProjectsDialog(HWND owner);
+
+/* --- pomodoro_stats_purge_dialog.c ------------------------------------- */
+void PomodoroStats_ShowPurgeDialog(HWND owner, PomodoroStatsRange initialRange);
 
 #endif /* POMODORO_STATS_INTERNAL_H */

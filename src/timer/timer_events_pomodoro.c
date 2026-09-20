@@ -36,6 +36,14 @@ static void IncrementPomodoroCompletedCount(void) {
     WriteIniInt(INI_SECTION_POMODORO, POMODORO_COUNT_INI_KEY, next, configPath);
 }
 
+void SetPomodoroCompletedCount(int value) {
+    char configPath[MAX_PATH];
+    if (value < 0) value = 0;
+    pomodoro_completed_count = value;
+    GetConfigPath(configPath, MAX_PATH);
+    WriteIniInt(INI_SECTION_POMODORO, POMODORO_COUNT_INI_KEY, value, configPath);
+}
+
 /* Append " · Total pomodoros: N" to a notification message. */
 static void AppendPomodoroTotal(wchar_t* message, size_t messageSize) {
     wchar_t totalText[64];

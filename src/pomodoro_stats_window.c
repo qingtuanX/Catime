@@ -25,6 +25,7 @@ static const StatsButtonSpec kStatsButtons[] = {
     {POMODORO_STATS_ID_RANGE_TODAY, L"Today", TRUE},
     {POMODORO_STATS_ID_RANGE_WEEK, L"Last 7 days", TRUE},
     {POMODORO_STATS_ID_REFRESH, L"Refresh", FALSE},
+    {POMODORO_STATS_ID_CLEAR, L"Clear statistics", FALSE},
     {POMODORO_STATS_ID_MANAGE, L"Manage projects", FALSE},
     {POMODORO_STATS_ID_OPEN_FOLDER, L"Open data folder", FALSE},
 };
@@ -190,6 +191,10 @@ static LRESULT CALLBACK StatsWindowProc(HWND hwnd, UINT message, WPARAM wp, LPAR
             return 0;
         }
         case POMODORO_STATS_ID_REFRESH:
+            StatsRefresh();
+            return 0;
+        case POMODORO_STATS_ID_CLEAR:
+            PomodoroStats_ShowPurgeDialog(hwnd, g_stats.range);
             StatsRefresh();
             return 0;
         case POMODORO_STATS_ID_MANAGE:

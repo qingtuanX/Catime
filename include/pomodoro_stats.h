@@ -65,6 +65,13 @@ void PomodoroStats_PromptInterruptedWork(HWND hwnd);
 /* Aggregate pomodoro_stats.csv for one time range. Returns the row count. */
 int PomodoroStats_BuildReport(PomodoroStatsRange range, PomodoroStatsReport* report);
 
+/* Records matching the same filter PomodoroStats_Purge() would remove. */
+int PomodoroStats_CountRange(PomodoroStatsRange range, const char* project);
+
+/* Remove matching records (project NULL/"" means every project). Returns the
+ * number of removed records; clearing everything also resets the counter. */
+int PomodoroStats_Purge(PomodoroStatsRange range, const char* project);
+
 /* Format a duration such as "1 h 20 min" in the current language. */
 void PomodoroStats_FormatDuration(int seconds, wchar_t* out, size_t outSize);
 

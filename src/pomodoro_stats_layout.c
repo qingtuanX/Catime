@@ -14,15 +14,18 @@
 #define STATS_CHIP_GAP 6
 #define STATS_ACTION_GAP 8
 
-static const int kChipWidths[3] = {72, 72, 96};
-static const int kActionWidths[3] = {84, 132, 150};
-static const int kChipIds[3] = {
+#define STATS_CHIP_COUNT 3
+#define STATS_ACTION_COUNT 4
+
+static const int kChipWidths[STATS_CHIP_COUNT] = {72, 72, 96};
+static const int kActionWidths[STATS_ACTION_COUNT] = {84, 120, 132, 150};
+static const int kChipIds[STATS_CHIP_COUNT] = {
     POMODORO_STATS_ID_RANGE_ALL, POMODORO_STATS_ID_RANGE_TODAY,
     POMODORO_STATS_ID_RANGE_WEEK
 };
-static const int kActionIds[3] = {
-    POMODORO_STATS_ID_REFRESH, POMODORO_STATS_ID_MANAGE,
-    POMODORO_STATS_ID_OPEN_FOLDER
+static const int kActionIds[STATS_ACTION_COUNT] = {
+    POMODORO_STATS_ID_REFRESH, POMODORO_STATS_ID_CLEAR,
+    POMODORO_STATS_ID_MANAGE, POMODORO_STATS_ID_OPEN_FOLDER
 };
 
 void PomodoroStats_UiLayout(PomodoroStatsUi* ui) {
@@ -32,6 +35,7 @@ void PomodoroStats_UiLayout(PomodoroStatsUi* ui) {
     int clientHeight = 0;
     int available = 0;
     int width96 = 0;
+    int actionsWidth = 0;
     int x96 = 0;
     int index = 0;
 
@@ -57,15 +61,18 @@ void PomodoroStats_UiLayout(PomodoroStatsUi* ui) {
     ui->chartRect.bottom = ui->tableRect.bottom;
 
     x96 = STATS_PADDING;
-    for (index = 0; index < 3; index++) {
+    for (index = 0; index < STATS_CHIP_COUNT; index++) {
         DialogModern_SetChildRect96(ui->hwnd, kChipIds[index], ui->dpi, x96, toolbarTop,
                                     kChipWidths[index], STATS_TOOLBAR_HEIGHT);
         x96 += kChipWidths[index] + STATS_CHIP_GAP;
     }
 
-    x96 = width96 - STATS_PADDING - (kActionWidths[0] + kActionWidths[1] +
-                                    kActionWidths[2] + 2 * STATS_ACTION_GAP);
-    for (index = 0; index < 3; index++) {
+    actionsWidth = kActionWidths[0];
+    for (index = 1; index < STATS_ACTION_COUNT; index++) {
+        actionsWidth += kActionWidths[index] + STATS_ACTION_GAP;
+    }
+    x96 = width96 - STATS_PADDING - actionsWidth;
+    for (index = 0; index < STATS_ACTION_COUNT; index++) {
         DialogModern_SetChildRect96(ui->hwnd, kActionIds[index], ui->dpi, x96, toolbarTop,
                                     kActionWidths[index], STATS_TOOLBAR_HEIGHT);
         x96 += kActionWidths[index] + STATS_ACTION_GAP;

@@ -30,6 +30,11 @@ extern int complete_pomodoro_cycles;
 int GetPomodoroCompletedCount(void);
 
 /**
+ * @brief Overwrite the lifetime counter (used when all statistics are cleared).
+ */
+void SetPomodoroCompletedCount(int value);
+
+/**
  * @note InitializePomodoro() declared in timer_events.h
  * @note POMODORO_TIMES and related config now in g_AppConfig.pomodoro
  */
