@@ -9,7 +9,6 @@
 #include <string.h>
 #include <time.h>
 #include <wchar.h>
-#include <shellapi.h>
 
 #include "config.h"
 #include "language.h"
@@ -250,29 +249,37 @@ void PomodoroStats_PromptInterruptedWork(HWND hwnd) {
     }
 }
 
-void PomodoroStats_OpenViewer(HWND hwnd) {
-    wchar_t exePath[MAX_PATH];
-    wchar_t viewerPath[MAX_PATH];
-    wchar_t* separator = NULL;
-    DWORD moduleLength = 0;
+FILE* PomodoroStats_OpenFile(const char* utf8Path, const wchar_t* mode) {
+    return OpenUtf8File(utf8Path, mode);
+}
 
-    moduleLength = GetModuleFileNameW(NULL, exePath, _countof(exePath));
-    if (moduleLength == 0 || moduleLength >= _countof(exePath)) return;
+const char* PomodoroStats_StatsFilePath(void) {
+    static char path[MAX_PATH];
+    char directory[MAX_PATH];
 
-    separator = wcsrchr(exePath, L'\\');
-    if (!separator) return;
-    *separator = L'\0';
+    PomodoroStats_DataDir(directory, sizeof(directory));
+    JoinPath(path, sizeof(path), directory, "pomodoro_stats.csv");
+    return path;
+}
 
-    _snwprintf_s(viewerPath, _countof(viewerPath), _TRUNCATE,
-                 L"%ls\\pomodoro-stats.exe", exePath);
+BOOL PomodoroStats_SaveProjects(char names[POMODORO_STATS_MAX_PROJECTS][POMODORO_STATS_NAME_MAX],
+                                int count) {
+    FILE* file = NULL;
+    int index = 0;
 
-    if (GetFileAttributesW(viewerPath) == INVALID_FILE_ATTRIBUTES) {
-        MessageBoxW(hwnd,
-                    L"\u627e\u4e0d\u5230 pomodoro-stats.exe\uff08\u5e94\u548c catime.exe \u653e\u5728\u540c\u4e00\u76ee\u5f55\uff09\n"
-                    L"pomodoro-stats.exe was not found next to catime.exe",
-                    L"Catime", MB_OK | MB_ICONWARNING | MB_TOPMOST);
-        return;
+    if (count < 0) count = 0;
+    if (count > POMODORO_STATS_MAX_PROJECTS) count = POMODORO_STATS_MAX_PROJECTS;
+
+    file = OpenUtf8File(PomodoroStats_ProjectsFilePath(), L"wb");
+    if (!file) return FALSE;
+
+    fputs("# One project name per line (UTF-8). Also editable in the statistics window.\n",
+          file);
+    for (index = 0; index < count; index++) {
+        if (names[index][0] == '\0') continue;
+        fputs(names[index], file);
+        fputc('\n', file);
     }
-
-    ShellExecuteW(hwnd, L"open", viewerPath, NULL, NULL, SW_SHOWNORMAL);
+    fclose(file);
+    return TRUE;
 }

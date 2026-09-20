@@ -8,7 +8,7 @@
 
 LRESULT CmdPomodoroStats(HWND hwnd, WPARAM wp, LPARAM lp) {
     (void)wp; (void)lp;
-    PomodoroStats_OpenViewer(hwnd);
+    PomodoroStats_ShowWindow(hwnd);
     return 0;
 }
 

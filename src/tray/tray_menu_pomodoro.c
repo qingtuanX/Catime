@@ -221,14 +221,14 @@ void BuildPomodoroMenu(HMENU hMenu) {
                             CLOCK_IDM_POMODORO_PROJECT_BASE + i, wideName);
             }
             AppendMenuW(hProjectMenu, MF_SEPARATOR, 0, NULL);
-            AppendMenuW(hProjectMenu, MF_STRING, CLOCK_IDM_POMODORO_STATS,
-                        GetLocalizedString(NULL, L"Statistics..."));
             if (!AppendMenuW(hPomodoroMenu, MF_POPUP, (UINT_PTR)hProjectMenu,
                              GetLocalizedString(NULL, L"Project"))) {
                 DestroyMenu(hProjectMenu);
             }
         }
     }
+    AppendMenuW(hPomodoroMenu, MF_STRING, CLOCK_IDM_POMODORO_STATS,
+                GetLocalizedString(NULL, L"Statistics..."));
 
     if (!AppendMenuW(hMenu, MF_POPUP, (UINT_PTR)hPomodoroMenu,
                      GetLocalizedString(NULL, L"Pomodoro"))) {
