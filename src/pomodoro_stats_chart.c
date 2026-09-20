@@ -7,11 +7,16 @@
 
 #include <math.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "language.h"
 
 #define STATS_PI 3.14159265358979323846
 #define STATS_ARC_POINTS 32
+
+/* Legend geometry of the last paint, used to hit-test clicks. */
+static RECT s_legendRects[POMODORO_STATS_MAX_PROJECTS];
+static int s_legendCount = 0;
 
 /* Fill one clockwise sector. A polygon fan avoids GDI's arc-direction rules. */
 static void FillSlice(HDC hdc, int centerX, int centerY, int radius,
@@ -59,10 +64,11 @@ void PomodoroStats_DrawPie(HDC hdc, const PomodoroStatsUi* ui,
     if (edgePen) previousPen = SelectObject(hdc, edgePen);
 
     for (index = 0; index < ui->report.rowCount && ui->report.totalSeconds > 0; index++) {
+        const PomodoroStatsRow* row = &ui->report.rows[index];
         double sweep = 2.0 * STATS_PI *
-            ((double)ui->report.rows[index].seconds / (double)ui->report.totalSeconds);
+            ((double)row->seconds / (double)ui->report.totalSeconds);
         double endAngle = startAngle + sweep;
-        HBRUSH brush = CreateSolidBrush(PomodoroStats_UiSliceColor(index));
+        HBRUSH brush = CreateSolidBrush(PomodoroStats_UiColorFor(ui, row->name, index));
         HGDIOBJ previousBrush = NULL;
 
         if (!brush) break;
@@ -86,6 +92,8 @@ void PomodoroStats_DrawLegend(HDC hdc, const PomodoroStatsUi* ui,
     int swatch = PomodoroStats_UiScale(ui, 10);
     int index = 0;
     int top = (int)rect->top + topOffset;
+
+    s_legendCount = 0;
 
     if (ui->report.totalSeconds <= 0) {
         RECT empty = *rect;
@@ -114,7 +122,8 @@ void PomodoroStats_DrawLegend(HDC hdc, const PomodoroStatsUi* ui,
         swatchRect.right = swatchRect.left + swatch;
         swatchRect.top = top + (rowHeight - swatch) / 2;
         swatchRect.bottom = swatchRect.top + swatch;
-        PomodoroStats_UiFill(hdc, &swatchRect, PomodoroStats_UiSliceColor(index));
+        PomodoroStats_UiFill(hdc, &swatchRect,
+                             PomodoroStats_UiColorFor(ui, row->name, index));
 
         textRect.left = swatchRect.right + PomodoroStats_UiScale(ui, 8);
         textRect.right = (int)rect->right;
@@ -122,6 +131,39 @@ void PomodoroStats_DrawLegend(HDC hdc, const PomodoroStatsUi* ui,
         textRect.bottom = top + rowHeight;
         DialogModern_DrawText(hdc, ui->bodyFont, palette->text, &textRect, line,
                               DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_END_ELLIPSIS);
+
+        if (s_legendCount < POMODORO_STATS_MAX_PROJECTS) {
+            s_legendRects[s_legendCount].left = swatchRect.left;
+            s_legendRects[s_legendCount].right = textRect.right;
+            s_legendRects[s_legendCount].top = textRect.top;
+            s_legendRects[s_legendCount].bottom = textRect.bottom;
+            s_legendCount++;
+        }
         top += rowHeight;
     }
+
+    if (s_legendCount > 0) {
+        RECT hint = *rect;
+        hint.top = top + PomodoroStats_UiScale(ui, 8);
+        hint.bottom = hint.top + rowHeight;
+        DialogModern_DrawText(hdc, ui->bodyFont, palette->mutedText, &hint,
+                              GetLocalizedString(NULL,
+                                  L"Click a color swatch to change that project's color"),
+                              DT_LEFT | DT_TOP | DT_SINGLELINE | DT_END_ELLIPSIS);
+    }
+}
+
+int PomodoroStats_LegendHitTest(const POINT* point) {
+    int index = 0;
+
+    if (!point) return -1;
+    for (index = 0; index < s_legendCount; index++) {
+        if (point->x >= s_legendRects[index].left &&
+            point->x < s_legendRects[index].right &&
+            point->y >= s_legendRects[index].top &&
+            point->y < s_legendRects[index].bottom) {
+            return index;
+        }
+    }
+    return -1;
 }

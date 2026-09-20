@@ -43,6 +43,8 @@ static PomodoroStatsRange StatsRangeForId(UINT id) {
 
 static void StatsRefresh(void) {
     PomodoroStats_BuildReport(g_stats.range, &g_stats.report);
+    g_stats.colorCount = PomodoroStats_LoadColors(g_stats.colors,
+                                                  POMODORO_STATS_MAX_PROJECTS);
     if (g_stats.hwnd) {
         InvalidateRect(g_stats.hwnd, NULL, FALSE);
     }
@@ -109,6 +111,25 @@ static void StatsHandleDrawItem(const DRAWITEMSTRUCT* item) {
     }
     rect = item->rcItem;
     PomodoroStats_PaintButton(item->hDC, &g_stats, &rect, text, selected, item->itemState);
+}
+
+static void StatsHandleLegendClick(HWND hwnd, LPARAM lp) {
+    POINT point;
+    const PomodoroStatsRow* entry = NULL;
+    COLORREF color = 0;
+    int row = 0;
+
+    point.x = (int)(short)LOWORD(lp);
+    point.y = (int)(short)HIWORD(lp);
+    row = PomodoroStats_LegendHitTest(&point);
+    if (row < 0 || row >= g_stats.report.rowCount) return;
+
+    entry = &g_stats.report.rows[row];
+    color = PomodoroStats_UiColorFor(&g_stats, entry->name, row);
+    if (!PomodoroStats_UiPickColor(hwnd, color, &color)) return;
+    if (PomodoroStats_SetProjectColor(entry->name, color)) {
+        StatsRefresh();
+    }
 }
 
 static LRESULT CALLBACK StatsWindowProc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp) {
@@ -208,6 +229,10 @@ static LRESULT CALLBACK StatsWindowProc(HWND hwnd, UINT message, WPARAM wp, LPAR
             break;
         }
         break;
+
+    case WM_LBUTTONDOWN:
+        StatsHandleLegendClick(hwnd, lp);
+        return 0;
 
     case WM_PAINT:
         PomodoroStats_PaintWindow(hwnd, &g_stats);

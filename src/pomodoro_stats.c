@@ -262,6 +262,15 @@ const char* PomodoroStats_StatsFilePath(void) {
     return path;
 }
 
+const char* PomodoroStats_ColorsFilePath(void) {
+    static char path[MAX_PATH];
+    char directory[MAX_PATH];
+
+    PomodoroStats_DataDir(directory, sizeof(directory));
+    JoinPath(path, sizeof(path), directory, "pomodoro_colors.txt");
+    return path;
+}
+
 BOOL PomodoroStats_SaveProjects(char names[POMODORO_STATS_MAX_PROJECTS][POMODORO_STATS_NAME_MAX],
                                 int count) {
     FILE* file = NULL;

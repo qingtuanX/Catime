@@ -40,12 +40,30 @@ typedef enum {
     POMODORO_STATS_RANGE_WEEK
 } PomodoroStatsRange;
 
+/** @brief Chart colors of one project (pomodoro_colors.txt). */
+#define POMODORO_STATS_DEFAULT_COLOR_COUNT 8
+
+typedef struct {
+    char name[POMODORO_STATS_NAME_MAX];
+    COLORREF color;
+} PomodoroStatsColorEntry;
+
+/* Palette color used when a project has no color of its own. */
+COLORREF PomodoroStats_DefaultColor(int index);
+
+/* Read pomodoro_colors.txt ("project=#RRGGBB" lines). Returns the entry count. */
+int PomodoroStats_LoadColors(PomodoroStatsColorEntry* entries, int maxCount);
+
+/* Store the chart color of one project (COLORREF -1 removes the entry). */
+BOOL PomodoroStats_SetProjectColor(const char* project, COLORREF color);
+
 /* Directory shared with config.ini. */
 void PomodoroStats_DataDir(char* out, size_t outSize);
 
 /* Data files (created on demand). */
 const char* PomodoroStats_ProjectsFilePath(void);
 const char* PomodoroStats_StatsFilePath(void);
+const char* PomodoroStats_ColorsFilePath(void);
 /* Open a data file with a wide-character mode so UTF-8 paths keep working. */
 FILE* PomodoroStats_OpenFile(const char* utf8Path, const wchar_t* mode);
 int PomodoroStats_ListProjects(char names[POMODORO_STATS_MAX_PROJECTS][POMODORO_STATS_NAME_MAX]);

@@ -20,7 +20,6 @@
 #define POMODORO_STATS_ID_OPEN_FOLDER 4006
 #define POMODORO_STATS_ID_CLEAR 4007
 
-#define POMODORO_STATS_SLICE_COUNT 8
 #define POMODORO_STATS_REFRESH_MS 3000
 
 typedef struct {
@@ -30,17 +29,25 @@ typedef struct {
     HFONT titleFont;
     PomodoroStatsRange range;
     PomodoroStatsReport report;
+    PomodoroStatsColorEntry colors[POMODORO_STATS_MAX_PROJECTS];
+    int colorCount;
     RECT tableRect;
     RECT chartRect;
     RECT summaryRect;
+    RECT legendRects[POMODORO_STATS_MAX_PROJECTS];
+    int legendCount;
 } PomodoroStatsUi;
 
 /* --- pomodoro_stats_ui.c ------------------------------------------------ */
 int PomodoroStats_UiScale(const PomodoroStatsUi* ui, int value);
 void PomodoroStats_UiFill(HDC hdc, const RECT* rect, COLORREF color);
-COLORREF PomodoroStats_UiSliceColor(int index);
 void PomodoroStats_UiProjectName(const char* name, wchar_t* out, size_t outSize);
 void PomodoroStats_UiOpenDataFolder(void);
+/* Chart color of one project: its saved color, otherwise the default palette. */
+COLORREF PomodoroStats_UiColorFor(const PomodoroStatsUi* ui, const char* project,
+                                  int index);
+/* Pick a color with Catime's own picker (no config side effects). */
+BOOL PomodoroStats_UiPickColor(HWND owner, COLORREF initial, COLORREF* selected);
 
 /* --- pomodoro_stats_layout.c ------------------------------------------- */
 void PomodoroStats_UiLayout(PomodoroStatsUi* ui);
@@ -62,6 +69,8 @@ void PomodoroStats_DrawPie(HDC hdc, const PomodoroStatsUi* ui,
 void PomodoroStats_DrawLegend(HDC hdc, const PomodoroStatsUi* ui,
                               const DialogModernPalette* palette, const RECT* rect,
                               int topOffset);
+/* Report row index of the legend entry under the point, or -1. */
+int PomodoroStats_LegendHitTest(const POINT* point);
 
 /* --- pomodoro_stats_projects_dialog.c ---------------------------------- */
 void PomodoroStats_ShowProjectsDialog(HWND owner);

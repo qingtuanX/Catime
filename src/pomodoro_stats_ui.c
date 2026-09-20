@@ -6,13 +6,12 @@
 #include "pomodoro_stats_internal.h"
 
 #include <shellapi.h>
+#include <string.h>
 
+#include "color/color_picker_dialog.h"
 #include "utils/string_convert.h"
 
-static const COLORREF kSliceColors[POMODORO_STATS_SLICE_COUNT] = {
-    RGB(255, 107, 91), RGB(78, 203, 113), RGB(86, 156, 214), RGB(220, 170, 60),
-    RGB(180, 120, 220), RGB(90, 200, 210), RGB(230, 120, 170), RGB(150, 160, 180)
-};
+#define POMODORO_STATS_CUSTOM_COLORS 16
 
 int PomodoroStats_UiScale(const PomodoroStatsUi* ui, int value) {
     return DialogModern_Scale(ui ? ui->dpi : 96u, value);
@@ -26,11 +25,6 @@ void PomodoroStats_UiFill(HDC hdc, const RECT* rect, COLORREF color) {
     if (!brush) return;
     FillRect(hdc, rect, brush);
     DeleteObject(brush);
-}
-
-COLORREF PomodoroStats_UiSliceColor(int index) {
-    if (index < 0) index = 0;
-    return kSliceColors[index % POMODORO_STATS_SLICE_COUNT];
 }
 
 void PomodoroStats_UiProjectName(const char* name, wchar_t* out, size_t outSize) {
@@ -48,4 +42,29 @@ void PomodoroStats_UiOpenDataFolder(void) {
     Utf8ToWide(directory, wideDirectory, _countof(wideDirectory));
     if (wideDirectory[0] == L'\0') return;
     ShellExecuteW(NULL, L"open", wideDirectory, NULL, NULL, SW_SHOWNORMAL);
+}
+
+COLORREF PomodoroStats_UiColorFor(const PomodoroStatsUi* ui, const char* project,
+                                  int index) {
+    int position = 0;
+
+    if (ui && project && *project) {
+        for (position = 0; position < ui->colorCount; position++) {
+            if (strcmp(ui->colors[position].name, project) == 0) {
+                return ui->colors[position].color;
+            }
+        }
+    }
+    return PomodoroStats_DefaultColor(index);
+}
+
+BOOL PomodoroStats_UiPickColor(HWND owner, COLORREF initial, COLORREF* selected) {
+    COLORREF customColors[POMODORO_STATS_CUSTOM_COLORS] = {0};
+    size_t customCount = 1;
+
+    if (!selected) return FALSE;
+    customColors[0] = initial;
+    return ModernColorPicker_Show(owner, initial, customColors,
+                                  POMODORO_STATS_CUSTOM_COLORS, &customCount,
+                                  selected);
 }
