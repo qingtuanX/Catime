@@ -23,7 +23,7 @@ $make = (Join-Path $env:WINLIBS_BIN "mingw32-make.exe").Replace('\', '/')
     "-DCMAKE_RC_COMPILER=$windres" `
     "-DCMAKE_MAKE_PROGRAM=$make" `
     "-DCATIME_RELEASE_OPTIMIZATION=-Oz" `
-    "-DCATIME_COMPRESS_EMBEDDED_ASSETS=OFF"
+    "-DCATIME_COMPRESS_EMBEDDED_ASSETS=ON"
 if ($LASTEXITCODE -ne 0) {
     throw "CMake configuration failed"
 }
